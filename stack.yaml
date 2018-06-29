@@ -1,0 +1,9 @@
+resolver: ghc-7.10.3
+
+packages:
+- .
+
+extra-deps:
+
+flags: {}
+

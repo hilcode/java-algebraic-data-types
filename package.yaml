@@ -1,0 +1,33 @@
+name:                java-algebraic-data-types
+version:             0.1.0.0
+github:              "hilcode/java-algebraic-data-types"
+license:             GPL-3
+author:              "Hilco Wijbenga"
+maintainer:          "hilco.wijbenga@gmail.com"
+copyright:           "Hilco Wijbenga"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+synopsis:            A code generation tool for ADTs in Java
+category:            Development
+
+description:         Please see the README on GitHub at <https://github.com/hilcode/java-algebraic-data-types#readme>.
+
+dependencies:
+- base
+
+ghc-options:
+- -Wall
+
+library:
+  source-dirs: src/main/eta
+
+executable:
+  main:                Main.hs
+  source-dirs:         src/main/eta
+  ghc-options:
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N

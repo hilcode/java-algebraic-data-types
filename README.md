@@ -1,0 +1,1 @@
+# java-algebraic-data-types

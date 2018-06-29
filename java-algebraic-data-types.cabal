@@ -1,0 +1,50 @@
+-- This file has been generated from package.yaml by hpack version 0.28.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: a5b2f1ad6c065c8bfdc356f86e50c85ad2ab716819aee45e144c093498cfd4d1
+
+name:           java-algebraic-data-types
+version:        0.1.0.0
+synopsis:       A code generation tool for ADTs in Java
+description:    Please see the README on GitHub at <https://github.com/hilcode/java-algebraic-data-types#readme>.
+category:       Development
+homepage:       https://github.com/hilcode/java-algebraic-data-types#readme
+bug-reports:    https://github.com/hilcode/java-algebraic-data-types/issues
+author:         Hilco Wijbenga
+maintainer:     hilco.wijbenga@gmail.com
+copyright:      Hilco Wijbenga
+license:        GPL-3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+extra-source-files:
+    ChangeLog.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/hilcode/java-algebraic-data-types
+
+library
+  exposed-modules:
+      Main
+  other-modules:
+      Paths_java_algebraic_data_types
+  hs-source-dirs:
+      src/main/eta
+  ghc-options: -Wall
+  build-depends:
+      base
+  default-language: Haskell2010
+
+executable java-algebraic-data-types
+  main-is: Main.hs
+  other-modules:
+      Paths_java_algebraic_data_types
+  hs-source-dirs:
+      src/main/eta
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+  default-language: Haskell2010
