@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a5b2f1ad6c065c8bfdc356f86e50c85ad2ab716819aee45e144c093498cfd4d1
+-- hash: 90ee838d2b96553ea5ec597bb4ab401a624c64196d2127290480ec304b3d3ce1
 
 name:           java-algebraic-data-types
 version:        0.1.0.0
@@ -28,7 +28,13 @@ source-repository head
 
 library
   exposed-modules:
+      Configuration
+      Java
+      Line
       Main
+      Misc
+      Result
+      Template
   other-modules:
       Paths_java_algebraic_data_types
   hs-source-dirs:
@@ -36,15 +42,27 @@ library
   ghc-options: -Wall
   build-depends:
       base
+    , containers
+    , mtl
+    , text
   default-language: Haskell2010
 
 executable java-algebraic-data-types
   main-is: Main.hs
   other-modules:
+      Configuration
+      Java
+      Line
+      Misc
+      Result
+      Template
       Paths_java_algebraic_data_types
   hs-source-dirs:
       src/main/eta
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base
+    , containers
+    , mtl
+    , text
   default-language: Haskell2010

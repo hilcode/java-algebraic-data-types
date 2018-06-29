@@ -17,6 +17,9 @@ description:         Please see the README on GitHub at <https://github.com/hilc
 
 dependencies:
 - base
+- containers
+- mtl
+- text
 
 ghc-options:
 - -Wall

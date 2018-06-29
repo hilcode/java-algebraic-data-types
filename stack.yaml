@@ -4,6 +4,7 @@ packages:
 - .
 
 extra-deps:
+- mtl-2.2.2
+- text-1.2.3.0
 
 flags: {}
-
