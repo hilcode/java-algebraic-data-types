@@ -41,7 +41,7 @@ import Line
 import Misc
     (get)
 import Template
-    (LoopVar(..), Template(..), emptyLine, javaImports, line, lineWithImports, loop)
+    (LoopVar(..), Template(..), emptyLine, javaImports, join, line, lineWithImports, loop)
 
 main :: IO ()
 main = putStr $ replace (importsGoHereKey `append` "\n") importsAsText templateAsText
@@ -71,7 +71,7 @@ javaImportsToText javaImports'
         joinJavaImports javaImports'' = "\n" `append` concat (intercalate ["\n"] javaImports'')
 
 javaClassTemplate :: JavaClass -> Template
-javaClassTemplate javaClass = Template $ do
+javaClassTemplate javaClass = join $ do
     configuration <- ask
     return $
         copyrightTemplate (configuration `get` copyright)       <>
@@ -95,7 +95,7 @@ javaFieldsTemplate :: JavaClass -> Template
 javaFieldsTemplate javaClass = loop javaFieldTemplate (fields javaClass)
 
 javaFieldTemplate :: LoopVar -> JavaField -> Template
-javaFieldTemplate _ javaField = Template $ do
+javaFieldTemplate _ javaField = join $ do
     javaFieldDeclaration <- fieldDeclaration javaField
     return $
         emptyLine                   <>
@@ -110,21 +110,19 @@ fieldDeclaration (JavaField (JavaFieldName fieldName) (JavaType javaType _)) = d
             USE_FIELDS  -> "public final " `append` javaType `append` " " `append` fieldName `append` ";"
 
 javaGettersTemplate :: JavaClass -> Template
-javaGettersTemplate javaClass = Template $
-    do
-        configuration <- ask
-        return $
-            case configuration `get` accessType of
-                USE_GETTERS -> loop javaGetterTemplate (fields javaClass)
-                USE_FIELDS  -> None
+javaGettersTemplate javaClass = join $ do
+    configuration <- ask
+    return $
+        case configuration `get` accessType of
+        USE_GETTERS -> loop javaGetterTemplate (fields javaClass)
+        USE_FIELDS  -> None
 
 javaGetterTemplate :: LoopVar -> JavaField -> Template
-javaGetterTemplate _ (JavaField (JavaFieldName fieldName) (JavaType javaType imports)) = Template $
-    return $
-        emptyLine                                                                            <>
-        lineWithImports ["public ", javaType, " get", toCamelCase fieldName, "() {"] imports <>
-        indent (line ["return this.", fieldName, ";"])                                       <>
-        line ["}"]
+javaGetterTemplate _ (JavaField (JavaFieldName fieldName) (JavaType javaType imports)) =
+    emptyLine                                                                            <>
+    lineWithImports ["public ", javaType, " get", toCamelCase fieldName, "() {"] imports <>
+    indent (line ["return this.", fieldName, ";"])                                       <>
+    line ["}"]
 
 toCamelCase :: Text -> Text
 toCamelCase name = (toUpper (take 1 name)) `append` (drop 1 name)

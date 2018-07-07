@@ -8,6 +8,7 @@ module Template
     , emptyLineIf
     , emptyLineUnless
     , javaImports
+    , join
     , line
     , lineWithImports
     , lineIf
@@ -24,9 +25,9 @@ import Control.Monad.Reader
 import Data.Set
     (Set, empty, fromList, union)
 import Data.Text
-    (Text, concat)
+    (Text)
 import Prelude
-    (Bool(False, True), Int, Monoid, foldl, length, map, mappend, mempty, not, traverse, zip, (+), (++), (==), (>>=))
+    (Bool(False, True), Int, Monoid, foldl, length, mappend, mempty, not, zip, ($), (+), (==), (>>=))
 
 import Configuration
     (Configuration(..))
@@ -37,34 +38,20 @@ import Line
 
 data Template
     = None
-    | One Line
-    | Many [Line]
-    | Template (Reader Configuration Template)
+    | Template (Reader Configuration [Line])
 
 instance Monoid Template where
     mempty = None
-    mappend None content                              = content
-    mappend content None                              = content
-    mappend (One lftLine) (One rgtLine)               = Many [lftLine, rgtLine]
-    mappend (One lftLine) (Many lines)                = Many (lftLine:lines)
-    mappend one@(One _) (Template reader)             = Template (mapReader (one `mappend`) reader)
-    mappend (Many lines) (One rgtLine)                = Many (lines ++ [rgtLine])
-    mappend (Many lftLines) (Many rgtLines)           = Many (lftLines ++ rgtLines)
-    mappend many@(Many _) (Template reader)           = Template (mapReader (many `mappend`) reader)
-    mappend (Template reader) one@(One _)             = Template (mapReader (`mappend` one) reader)
-    mappend (Template reader) many@(Many _)           = Template (mapReader (`mappend` many) reader)
-    mappend (Template lftReader) (Template rgtReader) = Template (liftA2 mappend lftReader rgtReader)
+    mappend None template                             = template
+    mappend template None                             = template
+    mappend (Template lftReader) (Template rgtReader) = Template $ liftA2 mappend lftReader rgtReader
 
 instance Indentable Template where
     indent None              = None
-    indent (One line')       = One (indent line')
-    indent (Many lines)      = Many (map indent lines)
     indent (Template reader) = Template (mapReader indent reader)
 
 instance ToText Template where
     toText _ None                       = return ""
-    toText indentStep (One line')       = toText indentStep line'
-    toText indentStep (Many lines)      = mapReader concat (traverse (toText indentStep) lines)
     toText indentStep (Template reader) = reader >>= toText indentStep
 
 data LoopVar = LoopVar
@@ -75,30 +62,30 @@ data LoopVar = LoopVar
     }
 
 loop :: forall model. (LoopVar -> model -> Template) -> [model] -> Template
-loop template models = foldl (mappend) None contents
+loop template models = foldl (mappend) None templates
   where
     count' :: Int
     count' = length models
     loopVar :: Int -> LoopVar
     loopVar index' = LoopVar index' (index' == 0) (index' + 1 == count') count'
-    contents :: [Template]
-    contents = [template (loopVar index') model' | (index', model') <- zip [0 ..] models]
+    templates :: [Template]
+    templates = [template (loopVar index') model' | (index', model') <- zip [0 ..] models]
 
 emptyLine :: Template
-emptyLine = One makeEmptyLine
+emptyLine = Template $ return [makeEmptyLine]
 
 emptyLineIf :: Bool -> Template
 emptyLineIf False = None
-emptyLineIf True  = One makeEmptyLine
+emptyLineIf True  = Template $ return [makeEmptyLine]
 
 emptyLineUnless :: Bool -> Template
 emptyLineUnless test = emptyLineIf (not test)
 
 line :: [Text] -> Template
-line lineParts = One (toLine lineParts)
+line lineParts = Template $ return [toLine lineParts]
 
 lineWithImports :: [Text] -> [JavaImport] -> Template
-lineWithImports lineParts imports' = One (toLineWithImports lineParts imports')
+lineWithImports lineParts imports' = Template $ return [toLineWithImports lineParts imports']
 
 lineIf :: Bool -> [Text] -> Template
 lineIf False _    = None
@@ -120,11 +107,16 @@ javaImports template =
 
 extractLines :: Template -> Reader Configuration [Line]
 extractLines template = case template of
-    None               -> return ([])
-    One line'          -> return ([line'])
-    Many lines         -> return lines
-    Template template' -> template' >>= extractLines
+    None               -> return []
+    Template template' -> template'
 
 extractJavaImportsFromLines :: [Line] -> Set JavaImport
 extractJavaImportsFromLines []            = empty
 extractJavaImportsFromLines (line':lines) = fromList (imports line') `union` extractJavaImportsFromLines lines
+
+join :: Reader Configuration Template -> Template
+join reader = Template $ reader >>= extract
+  where
+    extract :: Template -> Reader Configuration [Line]
+    extract None               = return []
+    extract (Template reader') = reader'

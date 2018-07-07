@@ -22,8 +22,10 @@ import Control.Monad.Reader
     (Reader)
 import Data.Text
     (Text, append, concat, replicate, singleton)
+import Data.Traversable
+    (sequence)
 import Prelude
-    (Int, return, ($), (+))
+    (Int, fmap, return, ($), (+))
 
 import Configuration
     (Configuration)
@@ -67,10 +69,16 @@ instance Indentable Line where
     indent (Line indentLevel text imports') =
         Line (indentLevel + 1) text imports'
 
+instance Indentable [Line] where
+    indent lines = fmap indent lines
+
 instance ToText Line where
     toText (IndentStep indentStep) (Line indentLevel text _) =
         return $
             replicate indentLevel indentStep `append` text `append` singleton '\n'
+
+instance ToText [Line] where
+    toText indentStep lines =  concat `fmap` sequence ((toText indentStep) `fmap` lines)
 
 makeEmptyLine :: Line
 makeEmptyLine = Line 0 "" []
