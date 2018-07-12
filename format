@@ -1,4 +1,8 @@
 #!/bin/bash
 
-find src/main/eta -type f -name '*.hs' |
-	xargs stylish-haskell -i
+if [ $# -eq 0 ]; then
+	find src/main/eta -type f -name '*.hs' |
+		xargs stylish-haskell -i
+else
+	stylish-haskell -i "$@"
+fi

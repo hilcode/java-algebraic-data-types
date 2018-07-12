@@ -3,20 +3,32 @@
 
 module Main where
 
-import Control.Monad.Reader
-    (Reader, ask, mapReader, runReader)
-import Data.List
-    (groupBy, intercalate, map, sort)
-import Data.Monoid
+import           Control.Applicative
+    ((<$>))
+import           Control.Monad
+    ((>>=))
+import qualified Control.Monad        as M
+    (return)
+import           Control.Monad.Reader
+    (Reader)
+import qualified Control.Monad.Reader as R
+    (runReader)
+import qualified Data.List            as L
+    (foldr, groupBy, reverse, sort)
+import           Data.Monoid
     ((<>))
-import Data.Set
-    (Set, null, toList)
-import Data.Text
-    (Text, append, concat, drop, pack, replace, take, toUpper)
-import Data.Text.IO
+import           Data.Set
+    (Set)
+import qualified Data.Set             as S
+    (empty, null, toList)
+import           Data.Text
+    (Text)
+import qualified Data.Text            as T
+    (append, drop, pack, take, toUpper)
+import qualified Data.Text.IO         as TIO
     (putStr)
-import Prelude
-    (Bool(..), IO, otherwise, return, show, ($), (==))
+import           Prelude
+    (Bool(..), IO, otherwise, show, ($), (==))
 
 import Configuration
     (AccessType(..), Configuration(..), Copyright(..))
@@ -30,90 +42,108 @@ import Java
     , JavaType(..)
     , className
     , fields
+    , javaImportToText
     , package
     , packageName
     , type__int
     , type__java_lang_String
+    , type__java_util_List
     , type__java_util_UUID
+    , type__org_example_Xyz
     )
 import Line
-    (Indentable(..), ToText(..), javaImportToText, tab)
+    (Indentable(..), Line(..), ToText(..), tab)
 import Misc
     (get)
 import Template
-    (LoopVar(..), Template(..), emptyLine, javaImports, join, line, lineWithImports, loop)
+    (LoopVar(..), Template(..), emptyLine, line, lineWithImports, listOfImports, loop)
 
 main :: IO ()
-main = putStr $ replace (importsGoHereKey `append` "\n") importsAsText templateAsText
+main = TIO.putStr pointWithImportsAsText
   where
+    config :: Configuration
     config = Configuration (Copyright 2018 "Me") USE_GETTERS
-    point' = javaClassTemplate point
-    importsAsText = runReader (mapReader javaImportsToText (javaImports point')) config
-    templateAsText = runReader (toText tab point') config
+    pointTemplate :: Template
+    pointTemplate = javaClassTemplate point config
+    pointWithImportsTemplate :: Template
+    pointWithImportsTemplate = insertImports (javaImportsTemplate (R.runReader (extractJavaImports pointTemplate) config)) pointTemplate
+    pointWithImportsAsText :: Text
+    pointWithImportsAsText = R.runReader (toText tab pointWithImportsTemplate) config
+    extractJavaImports :: Template -> Reader Configuration (Set JavaImport)
+    extractJavaImports None                        = M.return S.empty
+    extractJavaImports (Template javaImports' _)   = M.return javaImports'
+    extractJavaImports (TemplateWithConfig reader) = reader >>= extractJavaImports
 
-importsGoHereKey :: Text
-importsGoHereKey = "\0IMPORTS\0"
+insertImports :: Template -> Template -> Template
+insertImports importsTemplate template = insertImports' template
+  where
+    insertImports' :: Template -> Template
+    insertImports' None                        = None
+    insertImports' (TemplateWithConfig reader) = TemplateWithConfig $ insertImports' <$> reader
+    insertImports' (Template _ lines)          = replaceImportsLineWithImports [] lines
+    replaceImportsLineWithImports :: [Line] -> [Line] -> Template
+    replaceImportsLineWithImports linesWithoutImports []     = Template S.empty (L.reverse linesWithoutImports)
+    replaceImportsLineWithImports linesWithoutImports (line':lines) =
+        case line' of
+            Imports -> Template S.empty (L.reverse linesWithoutImports) <> importsTemplate <> Template S.empty lines
+            _       -> replaceImportsLineWithImports (line':linesWithoutImports) lines
 
-javaImportsToText :: Set JavaImport -> Text
-javaImportsToText javaImports'
-    | null javaImports' = ""
-    | otherwise = joinJavaImports (listToText (sortJavaImports javaImports'))
+javaImportsTemplate :: Set JavaImport -> Template
+javaImportsTemplate javaImports
+    | S.null javaImports = None
+    | otherwise          = L.foldr (<>) None (javaImportsToTemplate <$> sortedJavaImports)
       where
-        sortJavaImports :: Set JavaImport -> [[JavaImport]]
-        sortJavaImports javaImports'' = groupBy compareGroup (sort (toList javaImports''))
+        javaImportsToTemplate :: [JavaImport] -> Template
+        javaImportsToTemplate javaImportGroup =
+            emptyLine <>
+            (L.foldr (<>) None (javaImportToTemplate <$> javaImportGroup))
+        sortedJavaImports :: [[JavaImport]]
+        sortedJavaImports = L.groupBy compareGroup (L.sort (S.toList javaImports))
         compareGroup :: JavaImport -> JavaImport -> Bool
         compareGroup (JavaImport lftGroup _) (JavaImport rgtGroup _) = lftGroup == rgtGroup
         compareGroup (JavaStaticImport _ _) (JavaStaticImport _ _)   = True
         compareGroup _ _                                             = False
-        listToText :: [[JavaImport]] -> [[Text]]
-        listToText javaImports'' = map (map javaImportToText) javaImports''
-        joinJavaImports :: [[Text]] -> Text
-        joinJavaImports javaImports'' = "\n" `append` concat (intercalate ["\n"] javaImports'')
+        javaImportToTemplate :: JavaImport -> Template
+        javaImportToTemplate javaImport = line [javaImportToText javaImport]
 
-javaClassTemplate :: JavaClass -> Template
-javaClassTemplate javaClass = join $ do
-    configuration <- ask
-    return $
-        copyrightTemplate (configuration `get` copyright)       <>
-        line ["package ", packageName javaClass, ";"]           <>
-        line [importsGoHereKey]                                 <>
-        emptyLine                                               <>
-        line ["public final class ", className javaClass, " {"] <>
-        indent (javaFieldsTemplate javaClass)                   <>
-        indent (javaGettersTemplate javaClass)                  <>
-        emptyLine                                               <>
-        line ["}"]                                              <>
-        emptyLine
+javaClassTemplate :: JavaClass -> Configuration -> Template
+javaClassTemplate javaClass configuration =
+    copyrightTemplate (configuration `get` copyright)       <>
+    line ["package ", packageName javaClass, ";"]           <>
+    listOfImports                                           <>
+    emptyLine                                               <>
+    line ["public final class ", className javaClass, " {"] <>
+    indent (javaFieldsTemplate javaClass configuration)     <>
+    indent (javaGettersTemplate javaClass configuration)    <>
+    emptyLine                                               <>
+    line ["}"]                                              <>
+    emptyLine
 
 copyrightTemplate :: Copyright -> Template
 copyrightTemplate copyright' =
-    line ["/**"]                                                                                 <>
-    line [" * Copyright (C) ", pack (show (copyright' `get` year)), " ", copyright' `get` owner] <>
+    line ["/**"]                                                                                   <>
+    line [" * Copyright (C) ", T.pack (show (copyright' `get` year)), " ", copyright' `get` owner] <>
     line [" */"]
 
-javaFieldsTemplate :: JavaClass -> Template
-javaFieldsTemplate javaClass = loop javaFieldTemplate (fields javaClass)
+javaFieldsTemplate :: JavaClass -> Configuration -> Template
+javaFieldsTemplate javaClass configuration = loop (javaFieldTemplate configuration) (fields javaClass)
 
-javaFieldTemplate :: LoopVar -> JavaField -> Template
-javaFieldTemplate _ javaField = join $ do
-    javaFieldDeclaration <- fieldDeclaration javaField
-    return $
+javaFieldTemplate :: Configuration -> LoopVar -> JavaField -> Template
+javaFieldTemplate configuration _ javaField =
+    let javaFieldDeclaration = fieldDeclaration javaField configuration
+      in
         emptyLine                   <>
         line [javaFieldDeclaration]
 
-fieldDeclaration :: JavaField -> Reader Configuration Text
-fieldDeclaration (JavaField (JavaFieldName fieldName) (JavaType javaType _)) = do
-    configuration <- ask
-    return $
-        case configuration `get` accessType of
-            USE_GETTERS -> "private final " `append` javaType `append` " " `append` fieldName `append` ";"
-            USE_FIELDS  -> "public final " `append` javaType `append` " " `append` fieldName `append` ";"
+fieldDeclaration :: JavaField -> Configuration -> Text
+fieldDeclaration (JavaField (JavaFieldName fieldName) (JavaType javaType _)) configuration =
+    case configuration `get` accessType of
+        USE_GETTERS -> "private final " `T.append` javaType `T.append` " " `T.append` fieldName `T.append` ";"
+        USE_FIELDS  -> "public final " `T.append` javaType `T.append` " " `T.append` fieldName `T.append` ";"
 
-javaGettersTemplate :: JavaClass -> Template
-javaGettersTemplate javaClass = join $ do
-    configuration <- ask
-    return $
-        case configuration `get` accessType of
+javaGettersTemplate :: JavaClass -> Configuration -> Template
+javaGettersTemplate javaClass configuration =
+    case configuration `get` accessType of
         USE_GETTERS -> loop javaGetterTemplate (fields javaClass)
         USE_FIELDS  -> None
 
@@ -125,7 +155,7 @@ javaGetterTemplate _ (JavaField (JavaFieldName fieldName) (JavaType javaType imp
     line ["}"]
 
 toCamelCase :: Text -> Text
-toCamelCase name = (toUpper (take 1 name)) `append` (drop 1 name)
+toCamelCase name = (T.toUpper (T.take 1 name)) `T.append` (T.drop 1 name)
 
 org_example :: JavaPackage
 org_example = package "org.example"
@@ -139,4 +169,6 @@ point =
         , JavaField (JavaFieldName "name") type__java_lang_String
         , JavaField (JavaFieldName "uuid") type__java_util_UUID
         , JavaField (JavaFieldName "uuid2") type__java_util_UUID
+        , JavaField (JavaFieldName "extra") type__java_util_List
+        , JavaField (JavaFieldName "xyz") type__org_example_Xyz
         ]

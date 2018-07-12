@@ -10,6 +10,7 @@ module Java
     , JavaType(..)
     , className
     , fields
+    , javaImportToText
     , makeJavaImport
     , makeJavaStaticImport
     , package
@@ -17,10 +18,12 @@ module Java
     , type__int
     , type__java_lang_String
     , type__java_util_UUID
+    , type__java_util_List
+    , type__org_example_Xyz
     ) where
 
 import Data.Text
-    (Text, isPrefixOf)
+    (Text, append, isPrefixOf)
 import Prelude
     (Eq, Int, Ord)
 
@@ -30,6 +33,10 @@ type__java_lang_String :: JavaType
 type__java_lang_String = JavaType "String" []
 type__java_util_UUID :: JavaType
 type__java_util_UUID = JavaType "UUID" [makeJavaImport "java.util.UUID"]
+type__java_util_List :: JavaType
+type__java_util_List = JavaType "List" [makeJavaImport "java.util.List"]
+type__org_example_Xyz :: JavaType
+type__org_example_Xyz = JavaType "Xyz" [makeJavaImport "org.example.Xyz"]
 
 newtype JavaPackage
     = JavaPackage Text
@@ -83,3 +90,7 @@ javaImportGroup javaType =
     else if isPrefixOf "org." javaType then 3
     else if isPrefixOf "com." javaType then 4
     else 5
+
+javaImportToText :: JavaImport -> Text
+javaImportToText (JavaImport _ text)       = "import " `append` text `append` ";"
+javaImportToText (JavaStaticImport _ text) = "import static " `append` text `append` ";"

@@ -1,13 +1,7 @@
 module Result where
 
-import Control.Applicative
-    (Applicative(pure, (<*>)))
-import Data.Monoid
-    (Monoid(mappend, mempty))
 import Data.Text
     (Text)
-import Prelude
-    (Functor(fmap))
 
 data Result a
     = Success a
