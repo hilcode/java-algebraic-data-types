@@ -114,7 +114,7 @@ javaClassTemplate javaClass configuration =
     emptyLine                                               <>
     line ["public final class ", className javaClass, " {"] <>
     indent (javaFieldsTemplate javaClass configuration)     <>
-    indent (javaGettersTemplate javaClass configuration)    <>
+    indent (javaGettersTemplate javaClass)                  <>
     emptyLine                                               <>
     line ["}"]                                              <>
     emptyLine
@@ -144,11 +144,13 @@ fieldDeclaration (JavaField (JavaFieldName fieldName) (JavaType javaType _)) con
         USE_GETTERS -> "private final " `T.append` javaType `T.append` " " `T.append` fieldName `T.append` ";"
         USE_FIELDS  -> "public final " `T.append` javaType `T.append` " " `T.append` fieldName `T.append` ";"
 
-javaGettersTemplate :: JavaClass -> Configuration -> Template
-javaGettersTemplate javaClass configuration =
-    case configuration `get` accessType of
-        USE_GETTERS -> loop javaGetterTemplate (fields javaClass)
-        USE_FIELDS  -> None
+javaGettersTemplate :: JavaClass -> Template
+javaGettersTemplate javaClass = TemplateWithConfig $ do
+    configuration <- R.ask
+    M.return $
+        case configuration `get` accessType of
+            USE_GETTERS -> loop javaGetterTemplate (fields javaClass)
+            USE_FIELDS  -> None
 
 javaGetterTemplate :: LoopVar -> JavaField -> Template
 javaGetterTemplate _ (JavaField (JavaFieldName fieldName) (JavaType javaType imports)) =
