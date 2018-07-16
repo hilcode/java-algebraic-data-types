@@ -12,7 +12,7 @@ import qualified Control.Monad        as M
 import           Control.Monad.Reader
     (Reader)
 import qualified Control.Monad.Reader as R
-    (runReader)
+    (ask, runReader)
 import qualified Data.List            as L
     (foldr, groupBy, reverse, sort)
 import           Data.Monoid
@@ -108,7 +108,7 @@ javaImportsTemplate javaImports
 
 javaClassTemplate :: JavaClass -> Configuration -> Template
 javaClassTemplate javaClass configuration =
-    copyrightTemplate (configuration `get` copyright)       <>
+    copyrightTemplate                                       <>
     line ["package ", packageName javaClass, ";"]           <>
     listOfImports                                           <>
     emptyLine                                               <>
@@ -119,11 +119,14 @@ javaClassTemplate javaClass configuration =
     line ["}"]                                              <>
     emptyLine
 
-copyrightTemplate :: Copyright -> Template
-copyrightTemplate copyright' =
-    line ["/**"]                                                                                   <>
-    line [" * Copyright (C) ", T.pack (show (copyright' `get` year)), " ", copyright' `get` owner] <>
-    line [" */"]
+copyrightTemplate :: Template
+copyrightTemplate = TemplateWithConfig $ do
+    configuration <- R.ask
+    let copyright' = configuration `get` copyright in
+        M.return $
+            line ["/**"]                                                                                   <>
+            line [" * Copyright (C) ", T.pack (show (copyright' `get` year)), " ", copyright' `get` owner] <>
+            line [" */"]
 
 javaFieldsTemplate :: JavaClass -> Configuration -> Template
 javaFieldsTemplate javaClass configuration = loop (javaFieldTemplate configuration) (fields javaClass)
