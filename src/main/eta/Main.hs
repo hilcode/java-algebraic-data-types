@@ -145,12 +145,21 @@ fieldDeclaration (JavaField (JavaFieldName fieldName) (JavaType javaType _)) con
         USE_FIELDS  -> "public final " `T.append` javaType `T.append` " " `T.append` fieldName `T.append` ";"
 
 javaGettersTemplate :: JavaClass -> Template
-javaGettersTemplate javaClass = TemplateWithConfig $ do
-    configuration <- R.ask
-    M.return $
+javaGettersTemplate javaClass = templateWithConfig javaClass javaGettersTemplate'
+  where
+    javaGettersTemplate' :: JavaClass -> Configuration -> Template
+    javaGettersTemplate' javaClass' configuration =
         case configuration `get` accessType of
-            USE_GETTERS -> loop javaGetterTemplate (fields javaClass)
+            USE_GETTERS -> loop javaGetterTemplate (fields javaClass')
             USE_FIELDS  -> None
+
+templateWithConfig :: a -> (a -> Configuration -> Template) -> Template
+templateWithConfig x f = TemplateWithConfig $ do
+    config <- R.ask
+    M.return (f x config)
+
+templateWithReaderConfig :: a -> (a -> Reader Configuration Template) -> Template
+templateWithReaderConfig x f = TemplateWithConfig (f x)
 
 javaGetterTemplate :: LoopVar -> JavaField -> Template
 javaGetterTemplate _ (JavaField (JavaFieldName fieldName) (JavaType javaType imports)) =

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 90ee838d2b96553ea5ec597bb4ab401a624c64196d2127290480ec304b3d3ce1
+-- hash: 65bb53420d0fba5708914e43a495e0d07eb4d3085fb166251820192de847638a
 
 name:           java-algebraic-data-types
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
   exposed-modules:
       Configuration
       Java
+      Java2
       Line
       Main
       Misc
@@ -52,6 +53,7 @@ executable java-algebraic-data-types
   other-modules:
       Configuration
       Java
+      Java2
       Line
       Misc
       Result
