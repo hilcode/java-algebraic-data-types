@@ -12,25 +12,8 @@ import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text as Text
 
-data IndentationStep
-    = Tab
-    | TwoSpaces
-    | ThreeSpaces
-    | FourSpaces
-    | EightSpaces
-
-indentation :: IndentationStep -> Text
-indentation Tab         = "\t"
-indentation TwoSpaces   = "  "
-indentation ThreeSpaces = "   "
-indentation FourSpaces  = "    "
-indentation EightSpaces = "        "
-
-class ToText a where
-    toText :: a -> Text
-
-class ToIndentedText a where
-    toIndentedText :: IndentationStep -> a -> Text
+import Indentation
+import ToText
 
 data Line
     = Line Int Text
@@ -178,6 +161,7 @@ data Statement
     | If Clause [Clause] Clause
     | While Clause
     | DoWhile Clause
+    | Switch Expression [Clause] (Maybe Clause)
 
 data Block
     = Block [Statement]
