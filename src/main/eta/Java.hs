@@ -1,13 +1,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Java
-    ( JavaFile(..)
-    ) where
+module Java where
 
 import Prelude (Int, Eq, Ord, map, show, (++))
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -38,10 +36,9 @@ data Notice
 
 instance ToLines Notice where
     toLines _ (Notice name year)
-      = [ Line 0 "/*"
-        , Line 0 (" * Copyright (C) " <> (toText year))
-        , Line 0 (" * " <> name)
-        , Line 0 " */" ]
+      = [ Line 0  "/*"
+        , Line 0 (" * Copyright (C) " <> (toText year) <> " " <> name)
+        , Line 0  " */" ]
 
 newtype Package
     = Package Text
@@ -211,5 +208,22 @@ data NestedClass
     | NestedInterface Interface
 
 data JavaFile
-    = TopLevelClass Notice Package [Import] Class [InnerClass] [NestedClass]
-    | TopLevelInterface Notice Package [Import] Interface [NestedClass]
+    = TopLevelClass (Maybe Notice) Package [Import] Class [InnerClass] [NestedClass]
+    | TopLevelInterface (Maybe Notice) Package [Import] Interface [NestedClass]
+
+class JavaBuilder a where
+    toJava :: a -> [Line]
+
+instance JavaBuilder (Maybe Notice) where
+    toJava Nothing
+        = []
+    toJava (Just (Notice name year))
+        = [ Line 0  "/*"
+          , Line 0 (" * Copyright (C) " <> (toText year) <> " " <> name)
+          , Line 0  " */" ]
+
+instance JavaBuilder JavaFile where
+    toJava (TopLevelClass notice package imports class' innerClasses nestedClasses)
+        = toJava notice
+    toJava (TopLevelInterface notice package imports interface nestedClasses)
+        = toJava notice
