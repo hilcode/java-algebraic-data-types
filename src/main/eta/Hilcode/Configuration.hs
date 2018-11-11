@@ -1,6 +1,3 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-
 module Hilcode.Configuration
     ( Configuration(..)
     , Copyright(..)
