@@ -2,24 +2,39 @@ module Hilcode.Configuration
     ( Configuration(..)
     , Copyright(..)
     , AccessType(..)
+    , JavaTemplates(..)
+    , NoticeTemplate(..)
+    , NoticeTemplatePart(..)
     ) where
 
 import Data.Text
     (Text)
 import Prelude
-    (Enum, Eq, Int, Show)
+    (Enum, Eq, Int)
 
 data Copyright = Copyright
     { year  :: Int
     , owner :: Text
-    } deriving (Show)
+    }
 
 data AccessType
     = USE_GETTERS
     | USE_FIELDS
-    deriving (Enum, Eq, Show)
+    deriving (Enum, Eq)
 
 data Configuration = Configuration
     { copyright  :: Copyright
     , accessType :: AccessType
-    } deriving (Show)
+    , templates  :: JavaTemplates
+    }
+
+data JavaTemplates
+    = JavaTemplates NoticeTemplate
+
+data NoticeTemplatePart
+    = Static Text
+    | CopyrightYear
+    | CopyrightName
+
+data NoticeTemplate
+    = NoticeTemplate [[NoticeTemplatePart]]
