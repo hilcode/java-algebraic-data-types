@@ -2,7 +2,7 @@
 
 module Main where
 
-import Java
+import Hilcode.Java
 
 main :: IO ()
 main = putStrLn "Hello"

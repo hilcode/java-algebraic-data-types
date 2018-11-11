@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Java where
+module Hilcode.Java where
 
 import Prelude (Int, Eq, Ord, map, show, (++))
 
