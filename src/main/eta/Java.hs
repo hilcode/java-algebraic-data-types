@@ -11,7 +11,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 
 import Hilcode.Indentation
-import ToText
+import Hilcode.ToText
 
 data Line
     = Line Int Text

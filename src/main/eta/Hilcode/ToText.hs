@@ -1,4 +1,4 @@
-module ToText
+module Hilcode.ToText
     ( ToText
     , toText
     , ToIndentedText
