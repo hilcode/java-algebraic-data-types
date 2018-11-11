@@ -7,7 +7,7 @@ module ToText
 
 import Data.Text (Text)
 
-import Indentation
+import Hilcode.Indentation
 
 class ToText a where
     toText :: a -> Text

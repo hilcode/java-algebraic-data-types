@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9ef243f06c596c01b64b1868ebf76e7996420642789e17a3dfaf2a189e0c0f02
+-- hash: c7bbc0faf60b483c0b93a5548c335b3650954c469e9babdf8ac0c366a98b682c
 
 name:           java-algebraic-data-types
 version:        0.1.0.0
@@ -29,7 +29,7 @@ source-repository head
 library
   exposed-modules:
       Configuration
-      Indentation
+      Hilcode.Indentation
       Java
       Line
       Main
@@ -52,7 +52,7 @@ executable java-algebraic-data-types
   main-is: Main.hs
   other-modules:
       Configuration
-      Indentation
+      Hilcode.Indentation
       Java
       Line
       Misc

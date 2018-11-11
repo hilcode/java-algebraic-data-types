@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Indentation
+module Hilcode.Indentation
     ( IndentationStep
     , indentation
     ) where
