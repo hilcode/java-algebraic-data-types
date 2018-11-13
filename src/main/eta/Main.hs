@@ -30,7 +30,7 @@ noticeTemplate = NoticeTemplate
 class ToLines2 config a where
     toLines2 :: config -> a -> [Line]
 
-instance ToLines2 Configuration NoticeTemplate where
+instance HasCopyright configuration => ToLines2 configuration NoticeTemplate where
     toLines2 config (NoticeTemplate lineParts)
         = [Line 0 "/**"] <> map x lineParts <> [Line 0 " */"]
           where
@@ -40,9 +40,7 @@ instance ToLines2 Configuration NoticeTemplate where
             z resultSoFar (Static text) = resultSoFar <> text
             z resultSoFar CopyrightYear = resultSoFar <> (Text.pack $ show copyrightYear)
             z resultSoFar CopyrightName = resultSoFar <> copyrightName
-            copyright' :: Copyright
-            copyright' = copyright config
             copyrightYear :: Int
-            copyrightYear = year copyright'
+            copyrightYear = year config
             copyrightName :: Text
-            copyrightName = owner copyright'
+            copyrightName = owner config

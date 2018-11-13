@@ -1,5 +1,6 @@
 module Hilcode.Configuration
     ( Configuration(..)
+    , HasCopyright(..)
     , Copyright(..)
     , AccessType(..)
     , JavaTemplates(..)
@@ -14,10 +15,15 @@ import Prelude
 
 import Hilcode.Indentation
 
-data Copyright = Copyright
-    { year  :: Int
-    , owner :: Text
-    }
+class HasCopyright a where
+    year :: a -> Int
+    owner :: a -> Text
+
+data Copyright = Copyright Int Text
+
+instance HasCopyright Copyright where
+    year  (Copyright year' _     ) = year'
+    owner (Copyright _     owner') = owner'
 
 data AccessType
     = USE_GETTERS
@@ -26,10 +32,14 @@ data AccessType
 
 data Configuration = Configuration
     { indentationStep :: IndentationStep
-    , copyright       :: Copyright
+    , configCopyright :: Copyright
     , accessType      :: AccessType
     , templates       :: JavaTemplates
     }
+
+instance HasCopyright Configuration where
+    year (Configuration _ copyright _ _) = year copyright
+    owner (Configuration _ copyright _ _) = owner copyright
 
 data JavaTemplates
     = JavaTemplates NoticeTemplate
