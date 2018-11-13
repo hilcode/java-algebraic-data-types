@@ -10,6 +10,7 @@ import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text as Text
 
+import Hilcode.Configuration
 import Hilcode.Indentation
 import Hilcode.ToText
 
@@ -17,69 +18,66 @@ data Line
     = Line Int Text
 
 instance ToIndentedText Line where
-    toIndentedText indentationStep (Line indentationLevel line) = indent <> line <> "\n"
-      where
-        indent = Text.replicate indentationLevel (indentation indentationStep)
+    toIndentedText _ indentationStep' (Line indentationLevel line)
+        = indent <> line <> "\n"
+          where
+            indent = Text.replicate indentationLevel (indentation indentationStep')
 
 class ToLines a where
-    toLines :: Int -> a -> [Line]
+    toLines :: Configuration -> Int -> a -> [Line]
 
 newtype Year
     = Year Int
         deriving (Eq, Ord)
 
 instance ToText Year where
-    toText (Year year) = Text.pack (show year)
+    toText _ (Year year') = Text.pack (show year')
 
 data Notice
     = Notice Text Year
-
-instance ToLines Notice where
-    toLines _ (Notice name year)
-      = [ Line 0  "/*"
-        , Line 0 (" * Copyright (C) " <> (toText year) <> " " <> name)
-        , Line 0  " */" ]
 
 newtype Package
     = Package Text
 
 instance ToText Package where
-    toText (Package package) = package
+    toText _ (Package package) = package
 
 instance ToLines Package where
-    toLines _ (Package package)
+    toLines _ _ (Package package)
       = [ Line 0 ("package " <> package <> ";") ]
 
 newtype ClassName
     = ClassName Text
 
 instance ToText ClassName where
-    toText (ClassName className) = className
+    toText _ (ClassName className) = className
 
 newtype FunctionName
     = FunctionName Text
 
 instance ToText FunctionName where
-    toText (FunctionName functionName) = functionName
+    toText _ (FunctionName functionName) = functionName
 
 data Import
     = Import Package ClassName
     | StaticImport Package ClassName FunctionName
 
 instance ToLines Import where
-    toLines _ (Import package className) = [ Line 0 ("import " <> (toText package) <> "." <> (toText className) <> ";") ]
-    toLines _ (StaticImport package className functionName) = [ Line 0 ("import static " <> (toText package) <> "." <> (toText className) <> "." <> (toText functionName) <> ";") ]
+    toLines config _ (Import package className)
+        = [ Line 0 ("import " <> (toText config package) <> "." <> (toText config className) <> ";") ]
+    toLines config _ (StaticImport package className functionName)
+        = [ Line 0 ("import static " <> (toText config package) <> "." <> (toText config className) <> "." <> (toText config functionName) <> ";") ]
 
 newtype JavaDoc
     = JavaDoc [Text]
 
 instance ToLines [Text] where
-    toLines _ [] = []
-    toLines indentationLevel (line:lines) = [Line indentationLevel line] ++ (toLines indentationLevel lines)
+    toLines _ _ [] = []
+    toLines config indentationLevel (line:lines) = [Line indentationLevel line] ++ (toLines config indentationLevel lines)
 
 instance ToLines JavaDoc where
-    toLines indentationLevel (JavaDoc lines)
-      = [ Line indentationLevel "/**" ] ++ (toLines indentationLevel lines') ++ [ Line indentationLevel " */" ]
+    toLines config indentationLevel (JavaDoc lines)
+      = [ Line indentationLevel "/**" ] ++ (toLines config indentationLevel lines') ++ [ Line indentationLevel " */" ]
         where
           lines' :: [Text]
           lines' = map (" * " <>) lines
@@ -88,13 +86,13 @@ newtype AnnotationName
     = AnnotationName Text
 
 instance ToText AnnotationName where
-    toText (AnnotationName annotationName) = annotationName
+    toText _ (AnnotationName annotationName) = annotationName
 
 newtype AnnotationParameter
     = AnnotationParameter Text
 
 instance ToText AnnotationParameter where
-    toText (AnnotationParameter annotationParameter) = annotationParameter
+    toText _ (AnnotationParameter annotationParameter) = annotationParameter
 
 data Annotation
     = Annotation AnnotationName [AnnotationParameter]
@@ -212,18 +210,18 @@ data JavaFile
     | TopLevelInterface (Maybe Notice) Package [Import] Interface [NestedClass]
 
 class JavaBuilder a where
-    toJava :: a -> [Line]
+    toJava :: Configuration -> a -> [Line]
 
 instance JavaBuilder (Maybe Notice) where
-    toJava Nothing
+    toJava _ Nothing
         = []
-    toJava (Just (Notice name year))
+    toJava config (Just (Notice name year'))
         = [ Line 0  "/*"
-          , Line 0 (" * Copyright (C) " <> (toText year) <> " " <> name)
+          , Line 0 (" * Copyright (C) " <> (toText config year') <> " " <> name)
           , Line 0  " */" ]
 
 instance JavaBuilder JavaFile where
-    toJava (TopLevelClass notice package imports class' innerClasses nestedClasses)
-        = toJava notice
-    toJava (TopLevelInterface notice package imports interface nestedClasses)
-        = toJava notice
+    toJava config (TopLevelClass notice package imports class' innerClasses nestedClasses)
+        = toJava config notice
+    toJava config (TopLevelInterface notice package imports interface nestedClasses)
+        = toJava config notice

@@ -18,7 +18,7 @@ main :: IO ()
 main = putStrLn $ Text.unpack output
   where
     output :: Text
-    output = toText2 config (toLines2 config noticeTemplate)
+    output = toText config (toLines2 config noticeTemplate)
     config :: Configuration
     config = Configuration Tab (Copyright 2018 "Hilco Wijbenga") USE_FIELDS (JavaTemplates noticeTemplate)
 
@@ -27,11 +27,8 @@ noticeTemplate = NoticeTemplate
     [ [Static "Copyright (C) ", CopyrightYear, Static " ", CopyrightName]
     ]
 
-class ToText2 config a where
-    toText2 :: config -> a -> Text
-
-instance ToText2 Configuration Line where
-    toText2 config (Line indentationLevel text)
+instance ToText Line where
+    toText config (Line indentationLevel text)
         = indentation' <> text
           where
             indentationStep' :: IndentationStep
@@ -39,9 +36,9 @@ instance ToText2 Configuration Line where
             indentation' :: Text
             indentation' = Text.replicate indentationLevel (indentation indentationStep')
 
-instance ToText2 Configuration [Line] where
-    toText2 config lines'
-        = Text.intercalate "\n" (map (toText2 config) lines')
+instance ToText [Line] where
+    toText config lines'
+        = Text.intercalate "\n" (map (toText config) lines')
 
 class ToLines2 config a where
     toLines2 :: config -> a -> [Line]

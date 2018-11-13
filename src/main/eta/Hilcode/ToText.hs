@@ -1,16 +1,15 @@
 module Hilcode.ToText
-    ( ToText
-    , toText
-    , ToIndentedText
-    , toIndentedText
+    ( ToText(..)
+    , ToIndentedText(..)
     ) where
 
 import Data.Text (Text)
 
+import Hilcode.Configuration
 import Hilcode.Indentation
 
 class ToText a where
-    toText :: a -> Text
+    toText :: Configuration -> a -> Text
 
 class ToIndentedText a where
-    toIndentedText :: IndentationStep -> a -> Text
+    toIndentedText :: Configuration -> IndentationStep -> a -> Text
