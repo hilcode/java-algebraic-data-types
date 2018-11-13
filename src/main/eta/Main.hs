@@ -20,7 +20,7 @@ main = putStrLn $ Text.unpack output
     output :: Text
     output = toText config (toLines2 config noticeTemplate)
     config :: Configuration
-    config = Configuration Tab (Copyright 2018 "Hilco Wijbenga") USE_FIELDS (JavaTemplates noticeTemplate)
+    config = Configuration Tab (Copyright 2018 "Hilco Wijbenga") USE_FIELDS (JavaTemplate noticeTemplate)
 
 noticeTemplate :: NoticeTemplate
 noticeTemplate = NoticeTemplate

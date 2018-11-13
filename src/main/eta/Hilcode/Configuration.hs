@@ -3,7 +3,7 @@ module Hilcode.Configuration
     , HasCopyright(..)
     , Copyright(..)
     , AccessType(..)
-    , JavaTemplates(..)
+    , JavaTemplate(..)
     , NoticeTemplate(..)
     , NoticeTemplatePart(..)
     ) where
@@ -34,15 +34,15 @@ data Configuration = Configuration
     { indentationStep :: IndentationStep
     , configCopyright :: Copyright
     , accessType      :: AccessType
-    , templates       :: JavaTemplates
+    , template        :: JavaTemplate
     }
 
 instance HasCopyright Configuration where
     year (Configuration _ copyright _ _) = year copyright
     owner (Configuration _ copyright _ _) = owner copyright
 
-data JavaTemplates
-    = JavaTemplates NoticeTemplate
+data JavaTemplate
+    = JavaTemplate NoticeTemplate
 
 data NoticeTemplatePart
     = Static Text
