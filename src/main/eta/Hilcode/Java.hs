@@ -14,18 +14,6 @@ import Hilcode.Configuration
 import Hilcode.Indentation
 import Hilcode.ToText
 
-data Line
-    = Line Int Text
-
-instance ToIndentedText Line where
-    toIndentedText _ indentationStep' (Line indentationLevel line)
-        = indent <> line <> "\n"
-          where
-            indent = Text.replicate indentationLevel (indentation indentationStep')
-
-class ToLines a where
-    toLines :: Configuration -> Int -> a -> [Line]
-
 newtype Year
     = Year Int
         deriving (Eq, Ord)
