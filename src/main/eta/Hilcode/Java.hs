@@ -1,5 +1,6 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 module Hilcode.Java where
 
@@ -30,7 +31,7 @@ newtype Package
 instance ToText Package where
     toText _ (Package package) = package
 
-instance ToLines Package where
+instance ToLines Configuration Package where
     toLines _ _ (Package package)
       = [ Line 0 ("package " <> package <> ";") ]
 
@@ -50,7 +51,7 @@ data Import
     = Import Package ClassName
     | StaticImport Package ClassName FunctionName
 
-instance ToLines Import where
+instance ToLines Configuration Import where
     toLines config _ (Import package className)
         = [ Line 0 ("import " <> (toText config package) <> "." <> (toText config className) <> ";") ]
     toLines config _ (StaticImport package className functionName)
@@ -59,11 +60,11 @@ instance ToLines Import where
 newtype JavaDoc
     = JavaDoc [Text]
 
-instance ToLines [Text] where
+instance ToLines Configuration [Text] where
     toLines _ _ [] = []
     toLines config indentationLevel (line:lines) = [Line indentationLevel line] ++ (toLines config indentationLevel lines)
 
-instance ToLines JavaDoc where
+instance ToLines Configuration JavaDoc where
     toLines config indentationLevel (JavaDoc lines)
       = [ Line indentationLevel "/**" ] ++ (toLines config indentationLevel lines') ++ [ Line indentationLevel " */" ]
         where
