@@ -27,19 +27,6 @@ noticeTemplate = NoticeTemplate
     [ [Static "Copyright (C) ", CopyrightYear, Static " ", CopyrightName]
     ]
 
-instance ToText Line where
-    toText config (Line indentationLevel text)
-        = indentation' <> text
-          where
-            indentationStep' :: IndentationStep
-            indentationStep' = indentationStep config
-            indentation' :: Text
-            indentation' = Text.replicate indentationLevel (indentation indentationStep')
-
-instance ToText [Line] where
-    toText config lines'
-        = Text.intercalate "\n" (map (toText config) lines')
-
 class ToLines2 config a where
     toLines2 :: config -> a -> [Line]
 

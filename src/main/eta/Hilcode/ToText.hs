@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Hilcode.ToText
@@ -22,6 +23,19 @@ class ToIndentedText a where
 
 data Line
     = Line Int Text
+
+instance ToText Line where
+    toText config (Line indentationLevel text)
+        = indentation' <> text
+          where
+            indentationStep' :: IndentationStep
+            indentationStep' = indentationStep config
+            indentation' :: Text
+            indentation' = Text.replicate indentationLevel (indentation indentationStep')
+
+instance ToText [Line] where
+    toText config lines'
+        = Text.intercalate "\n" (map (toText config) lines')
 
 instance ToIndentedText Line where
     toIndentedText _ indentationStep' (Line indentationLevel line)
