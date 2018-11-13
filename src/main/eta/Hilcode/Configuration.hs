@@ -13,11 +13,8 @@ import Data.Text
 import Prelude
     (Enum, Eq, Int)
 
+import Hilcode.Base
 import Hilcode.Indentation
-
-class HasCopyright a where
-    year :: a -> Int
-    owner :: a -> Text
 
 data Copyright = Copyright Int Text
 
@@ -38,8 +35,8 @@ data Configuration = Configuration
     }
 
 instance HasCopyright Configuration where
-    year (Configuration _ copyright _ _) = year copyright
-    owner (Configuration _ copyright _ _) = owner copyright
+    year (Configuration _ copyright' _ _) = year copyright'
+    owner (Configuration _ copyright' _ _) = owner copyright'
 
 data JavaTemplate
     = JavaTemplate NoticeTemplate
