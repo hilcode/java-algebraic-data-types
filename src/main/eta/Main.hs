@@ -9,6 +9,7 @@ import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as Text
 
+import Hilcode.Base
 import Hilcode.Configuration
 import Hilcode.Indentation
 import Hilcode.Java

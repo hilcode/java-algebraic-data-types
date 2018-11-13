@@ -1,6 +1,5 @@
 module Hilcode.Configuration
     ( Configuration(..)
-    , HasCopyright(..)
     , Copyright(..)
     , AccessType(..)
     , JavaTemplate(..)
