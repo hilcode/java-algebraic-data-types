@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
@@ -9,28 +10,48 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 
 import Hilcode.Configuration
+import Hilcode.Indentation
 import Hilcode.Java
 import Hilcode.ToText
 
 main :: IO ()
-main = putStrLn "Hello"
+main = putStrLn $ Text.unpack output
+  where
+    output :: Text
+    output = toText2 config (toLines2 config noticeTemplate)
+    config :: Configuration
+    config = Configuration Tab (Copyright 2018 "Hilco Wijbenga") USE_FIELDS (JavaTemplates noticeTemplate)
 
 noticeTemplate :: NoticeTemplate
 noticeTemplate = NoticeTemplate
-    [ [Static "/*"]
-    , [Static " * Copyright (C) ", CopyrightYear, Static " ", CopyrightName]
-    , [Static " */"]
+    [ [Static "Copyright (C) ", CopyrightYear, Static " ", CopyrightName]
     ]
+
+class ToText2 config a where
+    toText2 :: config -> a -> Text
+
+instance ToText2 Configuration Line where
+    toText2 config (Line indentationLevel text)
+        = indentation' <> text
+          where
+            indentationStep' :: IndentationStep
+            indentationStep' = indentationStep config
+            indentation' :: Text
+            indentation' = Text.replicate indentationLevel (indentation indentationStep')
+
+instance ToText2 Configuration [Line] where
+    toText2 config lines'
+        = Text.intercalate "\n" (map (toText2 config) lines')
 
 class ToLines2 config a where
     toLines2 :: config -> a -> [Line]
 
 instance ToLines2 Configuration NoticeTemplate where
     toLines2 config (NoticeTemplate lineParts)
-        = map x lineParts
+        = [Line 0 "/**"] <> map x lineParts <> [Line 0 " */"]
           where
             x :: [NoticeTemplatePart] -> Line
-            x parts = Line 0 (foldl' z "" parts)
+            x parts = Line 0 (foldl' z " * " parts)
             z :: Text -> NoticeTemplatePart -> Text
             z resultSoFar (Static text) = resultSoFar <> text
             z resultSoFar CopyrightYear = resultSoFar <> (Text.pack $ show copyrightYear)

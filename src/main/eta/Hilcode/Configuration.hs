@@ -12,6 +12,8 @@ import Data.Text
 import Prelude
     (Enum, Eq, Int)
 
+import Hilcode.Indentation
+
 data Copyright = Copyright
     { year  :: Int
     , owner :: Text
@@ -23,9 +25,10 @@ data AccessType
     deriving (Enum, Eq)
 
 data Configuration = Configuration
-    { copyright  :: Copyright
-    , accessType :: AccessType
-    , templates  :: JavaTemplates
+    { indentationStep :: IndentationStep
+    , copyright       :: Copyright
+    , accessType      :: AccessType
+    , templates       :: JavaTemplates
     }
 
 data JavaTemplates

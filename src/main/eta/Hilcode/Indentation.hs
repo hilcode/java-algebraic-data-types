@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Hilcode.Indentation
-    ( IndentationStep
+    ( IndentationStep(..)
     , indentation
     ) where
 
